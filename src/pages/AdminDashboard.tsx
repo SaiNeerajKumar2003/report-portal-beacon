@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Plus, Settings, Eye, BarChart3, Users, Activity } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Report {
   id: string;
@@ -20,9 +22,10 @@ interface Report {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Mock reports data
-  const [reports] = useState<Report[]>([
+  const [reports, setReports] = useState<Report[]>([
     {
       id: 'report1',
       name: 'Sales Performance Dashboard',
@@ -48,6 +51,22 @@ const AdminDashboard = () => {
       accessUsers: ['user2']
     }
   ]);
+
+  const handleStatusToggle = (reportId: string, newStatus: 'active' | 'inactive') => {
+    setReports(prevReports => 
+      prevReports.map(report => 
+        report.id === reportId 
+          ? { ...report, status: newStatus, lastModified: new Date().toISOString().split('T')[0] }
+          : report
+      )
+    );
+    
+    const report = reports.find(r => r.id === reportId);
+    toast({
+      title: "Report Status Updated",
+      description: `${report?.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'}.`
+    });
+  };
 
   const stats = [
     {
@@ -130,23 +149,39 @@ const AdminDashboard = () => {
                       <span>Users with access: {report.accessUsers.length}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/report/${report.id}`)}
-                    >
-                      <Eye className="mr-1 h-4 w-4" />
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/configure/${report.id}`)}
-                    >
-                      <Settings className="mr-1 h-4 w-4" />
-                      Configure
-                    </Button>
+                  <div className="flex items-center gap-4">
+                    {/* Status Toggle */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">
+                        {report.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                      <Switch
+                        checked={report.status === 'active'}
+                        onCheckedChange={(checked) => 
+                          handleStatusToggle(report.id, checked ? 'active' : 'inactive')
+                        }
+                      />
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/admin/report/${report.id}`)}
+                      >
+                        <Eye className="mr-1 h-4 w-4" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/admin/configure/${report.id}`)}
+                      >
+                        <Settings className="mr-1 h-4 w-4" />
+                        Configure
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
