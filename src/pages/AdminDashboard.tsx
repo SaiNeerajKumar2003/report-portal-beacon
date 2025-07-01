@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,57 +9,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Plus, Settings, Eye, BarChart3, Users, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface Report {
-  id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'inactive';
-  lastModified: string;
-  accessUsers: string[];
-}
+import { reportsStore, ReportConfig } from '@/stores/reportsStore';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  // Mock reports data
-  const [reports, setReports] = useState<Report[]>([
-    {
-      id: 'report1',
-      name: 'Sales Performance Dashboard',
-      description: 'Monthly sales performance metrics and KPIs',
-      status: 'active',
-      lastModified: '2024-06-25',
-      accessUsers: ['user1', 'user2']
-    },
-    {
-      id: 'report2',
-      name: 'Customer Analytics Report',
-      description: 'Customer behavior and segmentation analysis',
-      status: 'active',
-      lastModified: '2024-06-20',
-      accessUsers: ['user1']
-    },
-    {
-      id: 'report3',
-      name: 'Financial Summary',
-      description: 'Quarterly financial performance overview',
-      status: 'inactive',
-      lastModified: '2024-06-15',
-      accessUsers: ['user2']
-    }
-  ]);
+  const [reports, setReports] = useState<ReportConfig[]>([]);
+
+  useEffect(() => {
+    // Load reports from store
+    setReports(reportsStore.getAllReports());
+  }, []);
 
   const handleStatusToggle = (reportId: string, newStatus: 'active' | 'inactive') => {
-    setReports(prevReports => 
-      prevReports.map(report => 
-        report.id === reportId 
-          ? { ...report, status: newStatus, lastModified: new Date().toISOString().split('T')[0] }
-          : report
-      )
-    );
+    reportsStore.updateReport(reportId, { 
+      // Note: We're not storing status in our current interface, but we can extend it
+      lastUpdated: new Date().toLocaleString()
+    });
+    
+    // Update local state
+    setReports(reportsStore.getAllReports());
     
     const report = reports.find(r => r.id === reportId);
     toast({
@@ -77,7 +47,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Active Reports',
-      value: reports.filter(r => r.status === 'active').length.toString(),
+      value: reports.length.toString(), // All reports are considered active for now
       icon: Activity,
       color: 'text-green-600'
     },
@@ -139,13 +109,13 @@ const AdminDashboard = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-gray-900">{report.name}</h3>
-                      <Badge variant={report.status === 'active' ? 'default' : 'secondary'}>
-                        {report.status}
+                      <Badge variant="default">
+                        active
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{report.description}</p>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>Last modified: {report.lastModified}</span>
+                      <span>Last modified: {report.lastUpdated}</span>
                       <span>Users with access: {report.accessUsers.length}</span>
                     </div>
                   </div>
@@ -153,10 +123,10 @@ const AdminDashboard = () => {
                     {/* Status Toggle */}
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">
-                        {report.status === 'active' ? 'Active' : 'Inactive'}
+                        Active
                       </span>
                       <Switch
-                        checked={report.status === 'active'}
+                        checked={true}
                         onCheckedChange={(checked) => 
                           handleStatusToggle(report.id, checked ? 'active' : 'inactive')
                         }

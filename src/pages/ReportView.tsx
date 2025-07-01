@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { ArrowLeft, Maximize2, Download, Printer, RefreshCw } from 'lucide-react';
 import PowerBIEmbed from '@/components/powerbi/PowerBIEmbed';
+import { reportsStore, ReportConfig } from '@/stores/reportsStore';
 
 const ReportView = () => {
   const { reportId } = useParams();
@@ -14,32 +16,21 @@ const ReportView = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Mock report data with actual Power BI configuration
-  const reportData = {
-    id: reportId,
-    name: 'Sales Performance Dashboard',
-    description: 'Monthly sales performance metrics and KPIs',
-    category: 'Sales',
-    clientId: '12345678-1234-1234-1234-123456789012',
-    reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
-    embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=abcd1234-5678-90ef-ghij-klmnopqrstuv&groupId=me',
-    tenantId: '87654321-4321-4321-4321-210987654321',
-    lastUpdated: '2024-06-26 10:30 AM',
-    allowExport: true,
-    allowPrint: true,
-    // In production, this would come from your secure backend
-    embedToken: null // Set to null to show the authentication required message
-  };
+  const [reportData, setReportData] = useState<ReportConfig | null>(null);
 
   useEffect(() => {
+    if (reportId) {
+      const report = reportsStore.getReport(reportId);
+      setReportData(report || null);
+    }
+    
     // Simulate loading
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [reportId]);
 
   const handleBack = () => {
     if (user?.role === 'admin') {
@@ -65,6 +56,20 @@ const ReportView = () => {
       setIsLoading(false);
     }, 1000);
   };
+
+  if (!reportData) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Report Not Found</h2>
+            <p className="text-gray-600 mb-4">The requested report could not be found.</p>
+            <Button onClick={handleBack}>Go Back</Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

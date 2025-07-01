@@ -1,0 +1,63 @@
+
+interface ReportConfig {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  clientId: string;
+  reportId: string;
+  embedUrl: string;
+  tenantId: string;
+  embedToken: string;
+  allowExport: boolean;
+  allowPrint: boolean;
+  accessUsers: string[];
+  lastUpdated: string;
+}
+
+class ReportsStore {
+  private reports: Map<string, ReportConfig> = new Map();
+
+  constructor() {
+    // Initialize with some default data
+    this.reports.set('report1', {
+      id: 'report1',
+      name: 'Sales Performance Dashboard',
+      description: 'Monthly sales performance metrics and KPIs',
+      category: 'Sales',
+      clientId: '12345678-1234-1234-1234-123456789012',
+      reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
+      embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=abcd1234-5678-90ef-ghij-klmnopqrstuv&groupId=me',
+      tenantId: '87654321-4321-4321-4321-210987654321',
+      embedToken: '',
+      allowExport: true,
+      allowPrint: true,
+      accessUsers: ['user1', 'user2'],
+      lastUpdated: '2024-06-26 10:30 AM'
+    });
+  }
+
+  getReport(id: string): ReportConfig | undefined {
+    return this.reports.get(id);
+  }
+
+  saveReport(report: ReportConfig): void {
+    report.lastUpdated = new Date().toLocaleString();
+    this.reports.set(report.id, report);
+  }
+
+  getAllReports(): ReportConfig[] {
+    return Array.from(this.reports.values());
+  }
+
+  updateReport(id: string, updates: Partial<ReportConfig>): void {
+    const existing = this.reports.get(id);
+    if (existing) {
+      const updated = { ...existing, ...updates, lastUpdated: new Date().toLocaleString() };
+      this.reports.set(id, updated);
+    }
+  }
+}
+
+export const reportsStore = new ReportsStore();
+export type { ReportConfig };

@@ -10,6 +10,7 @@ import PowerBIConfigSection from '@/components/forms/PowerBIConfigSection';
 import PermissionsSection from '@/components/forms/PermissionsSection';
 import FormHeader from '@/components/forms/FormHeader';
 import FormActions from '@/components/forms/FormActions';
+import { reportsStore } from '@/stores/reportsStore';
 
 const ConfigureReport = () => {
   const { reportId } = useParams();
@@ -35,23 +36,25 @@ const ConfigureReport = () => {
   const isEditing = !!reportId;
 
   useEffect(() => {
-    if (isEditing) {
-      // Mock loading existing report data
-      setFormData({
-        name: 'Sales Performance Dashboard',
-        description: 'Monthly sales performance metrics and KPIs',
-        category: 'Sales',
-        clientId: '12345678-1234-1234-1234-123456789012',
-        reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
-        embedUrl: 'https://app.powerbi.com/embed/report/sample-report-id',
-        tenantId: '87654321-4321-4321-4321-210987654321',
-        embedToken: '',
-        allowExport: true,
-        allowPrint: true,
-        accessUsers: ['user1', 'user2']
-      });
+    if (isEditing && reportId) {
+      const existingReport = reportsStore.getReport(reportId);
+      if (existingReport) {
+        setFormData({
+          name: existingReport.name,
+          description: existingReport.description,
+          category: existingReport.category,
+          clientId: existingReport.clientId,
+          reportId: existingReport.reportId,
+          embedUrl: existingReport.embedUrl,
+          tenantId: existingReport.tenantId,
+          embedToken: existingReport.embedToken,
+          allowExport: existingReport.allowExport,
+          allowPrint: existingReport.allowPrint,
+          accessUsers: existingReport.accessUsers
+        });
+      }
     }
-  }, [isEditing]);
+  }, [isEditing, reportId]);
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({
@@ -78,6 +81,24 @@ const ConfigureReport = () => {
     try {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const reportData = {
+        id: reportId || `report-${Date.now()}`,
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        clientId: formData.clientId,
+        reportId: formData.reportId,
+        embedUrl: formData.embedUrl,
+        tenantId: formData.tenantId,
+        embedToken: formData.embedToken,
+        allowExport: formData.allowExport,
+        allowPrint: formData.allowPrint,
+        accessUsers: formData.accessUsers,
+        lastUpdated: new Date().toLocaleString()
+      };
+
+      reportsStore.saveReport(reportData);
       
       toast({
         title: isEditing ? "Report Updated" : "Report Created",
