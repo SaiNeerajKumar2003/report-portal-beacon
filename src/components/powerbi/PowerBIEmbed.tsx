@@ -42,8 +42,12 @@ const PowerBIEmbed = ({ reportId, clientId, embedUrl, tenantId, embedToken, clas
     };
 
     try {
-      // Create a simple service instance
-      const powerbi = new service.Service();
+      // Use the global powerbi service
+      const powerbi = window.powerbi;
+      if (!powerbi) {
+        console.error('Power BI JavaScript SDK not loaded');
+        return;
+      }
 
       reportRef.current = powerbi.embed(
         reportContainer.current,
