@@ -35,18 +35,14 @@ const PowerBIEmbed = ({ reportId, clientId, embedUrl, accessToken, className = '
           }
         },
         background: models.BackgroundType.Transparent,
-        layoutType: models.LayoutType.FitToPage,
+        layoutType: models.LayoutType.Custom,
         contrastMode: models.ContrastMode.None
       }
     };
 
     try {
       // Embed the report using the service
-      const powerbi = new service.Service(
-        service.factories.hpmFactory,
-        service.factories.wpmpFactory,
-        service.factories.routerFactory
-      );
+      const powerbi = new service.Service();
 
       reportRef.current = powerbi.embed(
         reportContainer.current,
