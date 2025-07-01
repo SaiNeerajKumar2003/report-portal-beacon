@@ -17,24 +17,56 @@ interface ReportConfig {
 
 class ReportsStore {
   private reports: Map<string, ReportConfig> = new Map();
+  private readonly STORAGE_KEY = 'powerbi_reports';
 
   constructor() {
-    // Initialize with some default data
-    this.reports.set('report1', {
-      id: 'report1',
-      name: 'Sales Performance Dashboard',
-      description: 'Monthly sales performance metrics and KPIs',
-      category: 'Sales',
-      clientId: '12345678-1234-1234-1234-123456789012',
-      reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
-      embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=abcd1234-5678-90ef-ghij-klmnopqrstuv&groupId=me',
-      tenantId: '87654321-4321-4321-4321-210987654321',
-      embedToken: '',
-      allowExport: true,
-      allowPrint: true,
-      accessUsers: ['user1', 'user2'],
-      lastUpdated: '2024-06-26 10:30 AM'
-    });
+    this.loadFromStorage();
+    
+    // Initialize with default data only if no reports exist
+    if (this.reports.size === 0) {
+      this.reports.set('report1', {
+        id: 'report1',
+        name: 'Sales Performance Dashboard',
+        description: 'Monthly sales performance metrics and KPIs',
+        category: 'Sales',
+        clientId: '12345678-1234-1234-1234-123456789012',
+        reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
+        embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=abcd1234-5678-90ef-ghij-klmnopqrstuv&groupId=me',
+        tenantId: '87654321-4321-4321-4321-210987654321',
+        embedToken: '',
+        allowExport: true,
+        allowPrint: true,
+        accessUsers: ['user1', 'user2'],
+        lastUpdated: '2024-06-26 10:30 AM'
+      });
+      this.saveToStorage();
+    }
+  }
+
+  private loadFromStorage(): void {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const reportsArray: ReportConfig[] = JSON.parse(stored);
+        this.reports.clear();
+        reportsArray.forEach(report => {
+          this.reports.set(report.id, report);
+        });
+        console.log('Loaded reports from localStorage:', reportsArray.length);
+      }
+    } catch (error) {
+      console.error('Error loading reports from localStorage:', error);
+    }
+  }
+
+  private saveToStorage(): void {
+    try {
+      const reportsArray = Array.from(this.reports.values());
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(reportsArray));
+      console.log('Saved reports to localStorage:', reportsArray.length);
+    } catch (error) {
+      console.error('Error saving reports to localStorage:', error);
+    }
   }
 
   getReport(id: string): ReportConfig | undefined {
@@ -44,6 +76,7 @@ class ReportsStore {
   saveReport(report: ReportConfig): void {
     report.lastUpdated = new Date().toLocaleString();
     this.reports.set(report.id, report);
+    this.saveToStorage();
   }
 
   getAllReports(): ReportConfig[] {
@@ -55,7 +88,16 @@ class ReportsStore {
     if (existing) {
       const updated = { ...existing, ...updates, lastUpdated: new Date().toLocaleString() };
       this.reports.set(id, updated);
+      this.saveToStorage();
     }
+  }
+
+  deleteReport(id: string): boolean {
+    const deleted = this.reports.delete(id);
+    if (deleted) {
+      this.saveToStorage();
+    }
+    return deleted;
   }
 }
 
