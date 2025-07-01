@@ -1,3 +1,4 @@
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,8 @@ interface PowerBIConfigSectionProps {
     clientId: string;
     reportId: string;
     embedUrl: string;
+    tenantId: string;
+    embedToken: string;
   };
   onInputChange: (field: string, value: string) => void;
 }
@@ -18,9 +21,9 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
   const [testMessage, setTestMessage] = useState('');
 
   const handleTestConfiguration = async () => {
-    if (!formData.clientId || !formData.reportId) {
+    if (!formData.clientId || !formData.reportId || !formData.tenantId) {
       setTestStatus('error');
-      setTestMessage('Please fill in Client ID and Report ID first');
+      setTestMessage('Please fill in Client ID, Report ID, and Tenant ID first');
       return;
     }
 
@@ -95,6 +98,20 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
         </div>
         
         <div className="space-y-2">
+          <Label htmlFor="tenantId">Tenant ID *</Label>
+          <Input
+            id="tenantId"
+            value={formData.tenantId}
+            onChange={(e) => onInputChange('tenantId', e.target.value)}
+            placeholder="Enter Azure AD Tenant ID"
+            required
+          />
+          <p className="text-xs text-gray-500">
+            The Directory (Tenant) ID from Azure AD
+          </p>
+        </div>
+        
+        <div className="space-y-2">
           <Label htmlFor="reportId">Report ID *</Label>
           <Input
             id="reportId"
@@ -107,6 +124,21 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
             The unique Report ID from Power BI
           </p>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="embedToken">Embed Token *</Label>
+          <Input
+            id="embedToken"
+            type="password"
+            value={formData.embedToken}
+            onChange={(e) => onInputChange('embedToken', e.target.value)}
+            placeholder="Enter Power BI Embed Token"
+            required
+          />
+          <p className="text-xs text-gray-500">
+            The access token for embedding the report
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -115,7 +147,7 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
           id="embedUrl"
           value={formData.embedUrl}
           onChange={(e) => onInputChange('embedUrl', e.target.value)}
-          placeholder="https://app.powerbi.com/embed/report/..."
+          placeholder="https://app.powerbi.com/reportEmbed?reportId=..."
         />
         <p className="text-xs text-gray-500">
           Optional: Direct embed URL (will be generated if not provided)

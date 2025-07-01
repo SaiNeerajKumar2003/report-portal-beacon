@@ -24,11 +24,12 @@ const ReportView = () => {
     clientId: '12345678-1234-1234-1234-123456789012',
     reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
     embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=abcd1234-5678-90ef-ghij-klmnopqrstuv&groupId=me',
+    tenantId: '87654321-4321-4321-4321-210987654321',
     lastUpdated: '2024-06-26 10:30 AM',
     allowExport: true,
     allowPrint: true,
     // In production, this would come from your secure backend
-    accessToken: null // Set to null to show the authentication required message
+    embedToken: null // Set to null to show the authentication required message
   };
 
   useEffect(() => {
@@ -132,7 +133,8 @@ const ReportView = () => {
                   reportId={reportData.reportId}
                   clientId={reportData.clientId}
                   embedUrl={reportData.embedUrl}
-                  accessToken={reportData.accessToken}
+                  tenantId={reportData.tenantId}
+                  embedToken={reportData.embedToken}
                   className="h-full"
                 />
               </div>

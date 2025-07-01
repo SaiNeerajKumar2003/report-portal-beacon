@@ -24,6 +24,8 @@ const ConfigureReport = () => {
     clientId: '',
     reportId: '',
     embedUrl: '',
+    tenantId: '',
+    embedToken: '',
     allowExport: true,
     allowPrint: true,
     accessUsers: [] as string[]
@@ -42,6 +44,8 @@ const ConfigureReport = () => {
         clientId: '12345678-1234-1234-1234-123456789012',
         reportId: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
         embedUrl: 'https://app.powerbi.com/embed/report/sample-report-id',
+        tenantId: '87654321-4321-4321-4321-210987654321',
+        embedToken: '',
         allowExport: true,
         allowPrint: true,
         accessUsers: ['user1', 'user2']
@@ -61,10 +65,10 @@ const ConfigureReport = () => {
     setIsLoading(true);
 
     // Validate required fields
-    if (!formData.name || !formData.clientId || !formData.reportId) {
+    if (!formData.name || !formData.clientId || !formData.reportId || !formData.tenantId || !formData.embedToken) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Name, Client ID, Report ID)",
+        description: "Please fill in all required fields (Name, Client ID, Report ID, Tenant ID, and Embed Token)",
         variant: "destructive"
       });
       setIsLoading(false);
