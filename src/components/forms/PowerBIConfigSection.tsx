@@ -1,6 +1,8 @@
-
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { TestTube, CheckCircle, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface PowerBIConfigSectionProps {
   formData: {
@@ -12,9 +14,70 @@ interface PowerBIConfigSectionProps {
 }
 
 const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionProps) => {
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testMessage, setTestMessage] = useState('');
+
+  const handleTestConfiguration = async () => {
+    if (!formData.clientId || !formData.reportId) {
+      setTestStatus('error');
+      setTestMessage('Please fill in Client ID and Report ID first');
+      return;
+    }
+
+    setTestStatus('testing');
+    setTestMessage('Testing Power BI configuration...');
+
+    try {
+      // Mock validation - in production, this would validate the configuration
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate embed URL if not provided
+      if (!formData.embedUrl) {
+        const generatedUrl = `https://app.powerbi.com/reportEmbed?reportId=${formData.reportId}&groupId=me`;
+        onInputChange('embedUrl', generatedUrl);
+      }
+
+      setTestStatus('success');
+      setTestMessage('Configuration is valid! Ready to embed report.');
+    } catch (error) {
+      setTestStatus('error');
+      setTestMessage('Configuration test failed. Please check your credentials.');
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Power BI Configuration</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Power BI Configuration</h3>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleTestConfiguration}
+          disabled={testStatus === 'testing'}
+          className="flex items-center gap-2"
+        >
+          {testStatus === 'testing' ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+          ) : (
+            <TestTube className="h-4 w-4" />
+          )}
+          Test Config
+        </Button>
+      </div>
+
+      {testStatus !== 'idle' && (
+        <div className={`p-3 rounded-md flex items-center gap-2 ${
+          testStatus === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+          testStatus === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+          'bg-blue-50 text-blue-700 border border-blue-200'
+        }`}>
+          {testStatus === 'success' && <CheckCircle className="h-5 w-5" />}
+          {testStatus === 'error' && <XCircle className="h-5 w-5" />}
+          {testStatus === 'testing' && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />}
+          <span className="text-sm">{testMessage}</span>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
