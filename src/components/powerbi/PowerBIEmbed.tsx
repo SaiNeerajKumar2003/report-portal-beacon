@@ -42,7 +42,11 @@ const PowerBIEmbed = ({ reportId, clientId, embedUrl, accessToken, className = '
 
     try {
       // Embed the report using the service
-      const powerbi = new service.Service();
+      const powerbi = new service.Service(
+        service.factories.hpmFactory,
+        service.factories.wpmpFactory,
+        service.factories.routerFactory
+      );
 
       reportRef.current = powerbi.embed(
         reportContainer.current,
