@@ -27,6 +27,8 @@ const ConfigureReport = () => {
     embedUrl: '',
     tenantId: '',
     embedToken: '',
+    coreDatasetId: '',
+    reportDatasetId: '',
     allowExport: true,
     allowPrint: true,
     accessUsers: [] as string[]
@@ -48,6 +50,8 @@ const ConfigureReport = () => {
           embedUrl: existingReport.embedUrl,
           tenantId: existingReport.tenantId,
           embedToken: existingReport.embedToken,
+          coreDatasetId: existingReport.coreDatasetId || '',
+          reportDatasetId: existingReport.reportDatasetId || '',
           allowExport: existingReport.allowExport,
           allowPrint: existingReport.allowPrint,
           accessUsers: existingReport.accessUsers
@@ -68,10 +72,10 @@ const ConfigureReport = () => {
     setIsLoading(true);
 
     // Validate required fields
-    if (!formData.name || !formData.clientId || !formData.reportId || !formData.tenantId || !formData.embedToken) {
+    if (!formData.name || !formData.clientId || !formData.reportId || !formData.tenantId || !formData.coreDatasetId) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Name, Client ID, Report ID, Tenant ID, and Embed Token)",
+        description: "Please fill in all required fields (Name, Client ID, Report ID, Tenant ID, and Core Dataset ID)",
         variant: "destructive"
       });
       setIsLoading(false);
@@ -92,9 +96,12 @@ const ConfigureReport = () => {
         embedUrl: formData.embedUrl,
         tenantId: formData.tenantId,
         embedToken: formData.embedToken,
+        coreDatasetId: formData.coreDatasetId,
+        reportDatasetId: formData.reportDatasetId,
         allowExport: formData.allowExport,
         allowPrint: formData.allowPrint,
         accessUsers: formData.accessUsers,
+        isActive: true,
         lastUpdated: new Date().toLocaleString()
       };
 

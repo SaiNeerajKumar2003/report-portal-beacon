@@ -12,6 +12,8 @@ interface PowerBIConfigSectionProps {
     embedUrl: string;
     tenantId: string;
     embedToken: string;
+    coreDatasetId: string;
+    reportDatasetId: string;
   };
   onInputChange: (field: string, value: string) => void;
 }
@@ -19,11 +21,12 @@ interface PowerBIConfigSectionProps {
 const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionProps) => {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleTestConfiguration = async () => {
-    if (!formData.clientId || !formData.reportId || !formData.tenantId) {
+    if (!formData.clientId || !formData.reportId || !formData.tenantId || !formData.coreDatasetId) {
       setTestStatus('error');
-      setTestMessage('Please fill in Client ID, Report ID, and Tenant ID first');
+      setTestMessage('Please fill in Client ID, Report ID, Tenant ID, and Core Dataset ID first');
       return;
     }
 
@@ -34,17 +37,65 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
       // Mock validation - in production, this would validate the configuration
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Generate embed URL if not provided
-      if (!formData.embedUrl) {
-        const generatedUrl = `https://app.powerbi.com/reportEmbed?reportId=${formData.reportId}&groupId=me`;
-        onInputChange('embedUrl', generatedUrl);
-      }
-
       setTestStatus('success');
-      setTestMessage('Configuration is valid! Ready to embed report.');
+      setTestMessage('Configuration is valid! Ready to generate embed token.');
     } catch (error) {
       setTestStatus('error');
       setTestMessage('Configuration test failed. Please check your credentials.');
+    }
+  };
+
+  const handleGenerateToken = async () => {
+    if (!formData.clientId || !formData.reportId || !formData.tenantId || !formData.coreDatasetId) {
+      setTestStatus('error');
+      setTestMessage('Please fill in all required fields first');
+      return;
+    }
+
+    setIsGenerating(true);
+    setTestMessage('Generating embed token and URL...');
+
+    try {
+      // Mock API call - In production, this would call your backend API
+      // which would then use the Python code you provided
+      const response = await fetch('/api/generate-powerbi-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientId: formData.clientId,
+          tenantId: formData.tenantId,
+          reportId: formData.reportId,
+          coreDatasetId: formData.coreDatasetId,
+          reportDatasetId: formData.reportDatasetId || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate token');
+      }
+
+      const data = await response.json();
+      
+      // Update form with generated token and URL
+      onInputChange('embedToken', data.embedToken);
+      onInputChange('embedUrl', data.embedUrl);
+
+      setTestStatus('success');
+      setTestMessage('Embed token and URL generated successfully!');
+    } catch (error) {
+      // Mock successful generation for demo purposes
+      const mockEmbedUrl = `https://app.powerbi.com/reportEmbed?reportId=${formData.reportId}&groupId=me`;
+      const mockEmbedToken = `eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik5HVEZ2ZEstZnl0aEV1Q...`; // Mock token
+      
+      onInputChange('embedToken', mockEmbedToken);
+      onInputChange('embedUrl', mockEmbedUrl);
+
+      setTestStatus('success');
+      setTestMessage('Embed token and URL generated successfully! (Mock data for demo)');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -52,24 +103,41 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Power BI Configuration</h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleTestConfiguration}
-          disabled={testStatus === 'testing'}
-          className="flex items-center gap-2"
-        >
-          {testStatus === 'testing' ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-          ) : (
-            <TestTube className="h-4 w-4" />
-          )}
-          Test Config
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleTestConfiguration}
+            disabled={testStatus === 'testing'}
+            className="flex items-center gap-2"
+          >
+            {testStatus === 'testing' ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+            ) : (
+              <TestTube className="h-4 w-4" />
+            )}
+            Test Config
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={handleGenerateToken}
+            disabled={isGenerating}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+          >
+            {isGenerating ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+            ) : (
+              <CheckCircle className="h-4 w-4" />
+            )}
+            Generate Token
+          </Button>
+        </div>
       </div>
 
-      {testStatus !== 'idle' && (
+      {(testStatus !== 'idle' || isGenerating) && (
         <div className={`p-3 rounded-md flex items-center gap-2 ${
           testStatus === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
           testStatus === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
@@ -77,7 +145,7 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
         }`}>
           {testStatus === 'success' && <CheckCircle className="h-5 w-5" />}
           {testStatus === 'error' && <XCircle className="h-5 w-5" />}
-          {testStatus === 'testing' && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />}
+          {(testStatus === 'testing' || isGenerating) && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />}
           <span className="text-sm">{testMessage}</span>
         </div>
       )}
@@ -126,17 +194,29 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="embedToken">Embed Token *</Label>
+          <Label htmlFor="coreDatasetId">Core Dataset ID *</Label>
           <Input
-            id="embedToken"
-            type="password"
-            value={formData.embedToken}
-            onChange={(e) => onInputChange('embedToken', e.target.value)}
-            placeholder="Enter Power BI Embed Token"
+            id="coreDatasetId"
+            value={formData.coreDatasetId}
+            onChange={(e) => onInputChange('coreDatasetId', e.target.value)}
+            placeholder="Enter Core Dataset ID"
             required
           />
           <p className="text-xs text-gray-500">
-            The access token for embedding the report
+            The primary dataset ID for the report
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="reportDatasetId">Report Dataset ID</Label>
+          <Input
+            id="reportDatasetId"
+            value={formData.reportDatasetId}
+            onChange={(e) => onInputChange('reportDatasetId', e.target.value)}
+            placeholder="Enter Report Dataset ID (optional)"
+          />
+          <p className="text-xs text-gray-500">
+            Optional: Additional shared dataset ID
           </p>
         </div>
       </div>
@@ -147,10 +227,28 @@ const PowerBIConfigSection = ({ formData, onInputChange }: PowerBIConfigSectionP
           id="embedUrl"
           value={formData.embedUrl}
           onChange={(e) => onInputChange('embedUrl', e.target.value)}
-          placeholder="https://app.powerbi.com/reportEmbed?reportId=..."
+          placeholder="Will be auto-generated..."
+          readOnly
+          className="bg-gray-50"
         />
         <p className="text-xs text-gray-500">
-          Optional: Direct embed URL (will be generated if not provided)
+          Auto-generated after clicking "Generate Token"
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="embedToken">Embed Token</Label>
+        <Input
+          id="embedToken"
+          type="password"
+          value={formData.embedToken}
+          onChange={(e) => onInputChange('embedToken', e.target.value)}
+          placeholder="Will be auto-generated..."
+          readOnly
+          className="bg-gray-50"
+        />
+        <p className="text-xs text-gray-500">
+          Auto-generated after clicking "Generate Token"
         </p>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,11 +21,8 @@ const AdminDashboard = () => {
     setReports(reportsStore.getAllReports());
   }, []);
 
-  const handleStatusToggle = (reportId: string, newStatus: 'active' | 'inactive') => {
-    reportsStore.updateReport(reportId, { 
-      // Note: We're not storing status in our current interface, but we can extend it
-      lastUpdated: new Date().toLocaleString()
-    });
+  const handleStatusToggle = (reportId: string) => {
+    const newStatus = reportsStore.toggleReportStatus(reportId);
     
     // Update local state
     setReports(reportsStore.getAllReports());
@@ -34,7 +30,7 @@ const AdminDashboard = () => {
     const report = reports.find(r => r.id === reportId);
     toast({
       title: "Report Status Updated",
-      description: `${report?.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'}.`
+      description: `${report?.name} has been ${newStatus ? 'activated' : 'deactivated'}.`
     });
   };
 
@@ -47,7 +43,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Active Reports',
-      value: reports.length.toString(), // All reports are considered active for now
+      value: reports.filter(r => r.isActive).length.toString(),
       icon: Activity,
       color: 'text-green-600'
     },
@@ -109,8 +105,8 @@ const AdminDashboard = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-gray-900">{report.name}</h3>
-                      <Badge variant="default">
-                        active
+                      <Badge variant={report.isActive ? "default" : "secondary"}>
+                        {report.isActive ? 'active' : 'inactive'}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{report.description}</p>
@@ -126,10 +122,8 @@ const AdminDashboard = () => {
                         Active
                       </span>
                       <Switch
-                        checked={true}
-                        onCheckedChange={(checked) => 
-                          handleStatusToggle(report.id, checked ? 'active' : 'inactive')
-                        }
+                        checked={report.isActive}
+                        onCheckedChange={() => handleStatusToggle(report.id)}
                       />
                     </div>
                     

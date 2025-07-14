@@ -1,4 +1,3 @@
-
 interface ReportConfig {
   id: string;
   name: string;
@@ -9,9 +8,12 @@ interface ReportConfig {
   embedUrl: string;
   tenantId: string;
   embedToken: string;
+  coreDatasetId: string;
+  reportDatasetId?: string;
   allowExport: boolean;
   allowPrint: boolean;
   accessUsers: string[];
+  isActive: boolean;
   lastUpdated: string;
 }
 
@@ -34,9 +36,12 @@ class ReportsStore {
         embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=abcd1234-5678-90ef-ghij-klmnopqrstuv&groupId=me',
         tenantId: '87654321-4321-4321-4321-210987654321',
         embedToken: '',
+        coreDatasetId: '1b112bf5-8e80-40a4-9c24-ff80458a1759',
+        reportDatasetId: '041e5091-1c88-49f0-b825-cf6b91f84a60',
         allowExport: true,
         allowPrint: true,
         accessUsers: ['user1', 'user2'],
+        isActive: true,
         lastUpdated: '2024-06-26 10:30 AM'
       });
       this.saveToStorage();
@@ -90,6 +95,17 @@ class ReportsStore {
       this.reports.set(id, updated);
       this.saveToStorage();
     }
+  }
+
+  toggleReportStatus(id: string): boolean {
+    const existing = this.reports.get(id);
+    if (existing) {
+      const updated = { ...existing, isActive: !existing.isActive, lastUpdated: new Date().toLocaleString() };
+      this.reports.set(id, updated);
+      this.saveToStorage();
+      return updated.isActive;
+    }
+    return false;
   }
 
   deleteReport(id: string): boolean {
